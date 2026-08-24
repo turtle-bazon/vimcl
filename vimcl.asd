@@ -11,6 +11,7 @@
     :components
     ((:file "package")
      (:file "buffer")
+     (:file "editor")
      (:file "main"))))
   :build-operation "program-op"
   :build-pathname "build/vimcl"
