@@ -1,0 +1,8 @@
+*.fasl
+*.dx64fsl
+*.lx64fsl
+build/
+vimcl
+vimcl.exe
+.opencode/
+*.bak
