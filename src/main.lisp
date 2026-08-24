@@ -7,8 +7,9 @@
 
 (defun vimcl-handler (cmd)
   (declare (ignore cmd))
-  (format t "vimcl ~a — vi-inspired editor in Common Lisp (skeleton)~%"
-          +version+))
+  (format t "vimcl ~a — q quits, help lists commands~%" +version+)
+  (run-editor-session (make-empty-buffer) *standard-input* t))
+
 
 (defun make-vimcl-command ()
   (clingon:make-command
@@ -25,8 +26,9 @@
     (clingon:run app)))
 (defun edit-handler (cmd)
   (declare (ignore cmd))
-  (format t "vimcl editor — ed-style commands: h j k l x X o i C %%p q~%")
-  (run-editor-session (make-empty-buffer)))
+  (format t "vimcl ~a — q quits, help lists commands~%" +version+)
+  (run-editor-session (make-empty-buffer) *standard-input* t))
+
 
 (defun make-edit-command ()
   (clingon:make-command

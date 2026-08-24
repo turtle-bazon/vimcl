@@ -40,13 +40,20 @@ cursor column under the cursor row."
         (t (values buf nil
                    (format nil "Unknown command: ~a (help lists commands)" cmd)))))))
 
-(defun run-editor-session (buf &optional (stream *standard-input*))
-  "Read editor commands from STREAM until quit/EOF."
+(defun run-editor-session (buf &optional (stream *standard-input*) display)
+  "Read editor commands from STREAM until quit/EOF.
+   When DISPLAY is non-NIL (interactive use), render the buffer before
+   each command so the user sees the effect of what they type."
   (loop
+    (when display
+      (write-line (buffer-render buf))
+      (format t "vimcl> ")
+      (force-output))
     (let ((line (read-line stream nil nil)))
       (unless line (return))
       (multiple-value-bind (new-buf quit-p output)
           (editor-step buf line)
         (setf buf new-buf)
-        (when output (write-line output))
+        (when (and output (not display)) (write-line output))
         (when quit-p (return))))))
+
