@@ -10,6 +10,7 @@
     :serial t
     :components
     ((:file "package")
+     (:file "buffer")
      (:file "main"))))
   :build-operation "program-op"
   :build-pathname "build/vimcl"

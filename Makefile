@@ -11,8 +11,8 @@ build:
 test:
 	@rm -rf ~/.cache/common-lisp/sbcl-*/tmp/vimcl
 	$(LISP) --non-interactive \
-	  --eval '(ql:quickload "vimcl")' \
-	  --eval '(format t "vimcl smoke: ok~%")'
+	  --eval '(ql:quickload "vimcl-tests")' \
+	  --eval '(unless (fiveam:run! :vimcl) (uiop:quit 1))'
 
 clean:
 	rm -rf build
