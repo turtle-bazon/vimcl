@@ -100,3 +100,21 @@ line's start."
          (new-line (nth new-row lines))
          (new-col (clamp-col new-line (+ (buffer-col buf) dc))))
     (%make-buffer lines new-row new-col)))
+(defun buffer-from-file (file)
+  "Load FILE into a new buffer, one list element per line.
+   A missing file yields an empty single-line buffer."
+  (if (and file (probe-file file))
+      (with-open-file (s file :direction :input)
+        (%make-buffer (loop for line = (read-line s nil nil)
+                            while line
+                            collect line)
+                      0 0))
+      (make-empty-buffer)))
+
+(defun write-buffer-to-file (buf file)
+  "Write BUF's lines to FILE, one per line."
+  (with-open-file (s file :direction :output
+                         :if-exists :supersede
+                         :if-does-not-exist :create)
+    (dolist (l (buffer-lines buf))
+      (write-line l s))))

@@ -8,7 +8,8 @@
 (defun vimcl-handler (cmd)
   (declare (ignore cmd))
   (format t "vimcl ~a — q quits, help lists commands~%" +version+)
-  (run-editor-session (make-empty-buffer) *standard-input* t))
+  (run-fullscreen-editor (make-empty-buffer)))
+
 
 
 (defun make-vimcl-command ()
