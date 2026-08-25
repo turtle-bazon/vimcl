@@ -6,9 +6,13 @@
   "vimcl 0.0.1.0")
 
 (defun vimcl-handler (cmd)
-  (declare (ignore cmd))
-  (format t "vimcl ~a — q quits, help lists commands~%" +version+)
-  (run-fullscreen-editor (make-empty-buffer)))
+  (let* ((args (clingon:command-arguments cmd))
+         (file (first args))
+         (buf (if file
+                  (buffer-from-file file)
+                  (make-empty-buffer))))
+    (run-fullscreen-editor buf file)))
+
 
 
 
@@ -19,20 +23,10 @@
    :description "vi-inspired editor in Common Lisp"
    :authors '("turtle-bazon")
    :license "GPL-3.0"
-   :handler #'vimcl-handler
-   :sub-commands (list (make-edit-command))))
+   :handler #'vimcl-handler))
 
 (defun main ()
   (let ((app (make-vimcl-command)))
     (clingon:run app)))
-(defun edit-handler (cmd)
-  (declare (ignore cmd))
-  (format t "vimcl ~a — q quits, help lists commands~%" +version+)
-  (run-editor-session (make-empty-buffer) *standard-input* t))
 
 
-(defun make-edit-command ()
-  (clingon:make-command
-   :name "edit"
-   :description "Start an editing session on an empty buffer"
-   :handler #'edit-handler))

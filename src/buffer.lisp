@@ -1,11 +1,14 @@
 (in-package #:vimcl)
 
-(defstruct (buffer (:constructor %make-buffer (lines row col &optional (filename nil))))
+(defstruct (buffer (:constructor %make-buffer (lines row col &optional (filename nil) (want-col 0))))
   "A text buffer: LINES is a list of strings; the cursor sits at
-0-based ROW/COL. FILENAME is the persistence target. All operations
-are pure."
+0-based ROW/COL. WANT-COL is the desired column (vim curswant):
+vertical moves land on WANT-COL clamped to the new line, so after $
+every j/k sticks to end-of-line. FILENAME is the persistence target.
+All operations are pure."
   lines row col
-  (filename nil :read-only t))
+  (filename nil :read-only t)
+  (want-col 0))
 
 (defun make-empty-buffer (&optional filename)
   (%make-buffer (list "") 0 0 filename))
@@ -47,8 +50,8 @@ are pure."
                 (buffer-row buf) (buffer-col buf)
                 (buffer-filename buf)))
 
-(defun buffer-set-cursor (buf row col)
-  (%make-buffer (buffer-lines buf) row col (buffer-filename buf)))
+(defun buffer-set-cursor (buf row col &optional (want col))
+  (%make-buffer (buffer-lines buf) row col (buffer-filename buf) want))
 
 (defun buffer-insert-char (buf ch)
   "Insert CH at the cursor; the cursor advances past it."
@@ -109,11 +112,21 @@ are pure."
                   (1+ row) 0 (buffer-filename buf))))
 
 (defun buffer-move (buf dr dc)
+  "Vim-style motion: horizontal moves update both column and
+curswant; vertical moves land on curswant clamped to the new line,
+preserving curswant for chained j/k (so $-then-k stays at eol)."
   (let* ((lines (buffer-lines buf))
-         (new-row (clamp-row lines (+ (buffer-row buf) dr)))
-         (new-line (nth new-row lines))
-         (new-col (clamp-col new-line (+ (buffer-col buf) dc))))
-    (buffer-set-cursor buf new-row new-col)))
+         (new-row (clamp-row lines (+ (buffer-row buf) dr))))
+    (if (zerop dc)
+        ;; vertical: target column comes from want-col
+        (let ((new-line (nth new-row lines)))
+          (buffer-set-cursor buf new-row
+                             (clamp-col new-line (buffer-want-col buf))
+                             (buffer-want-col buf)))
+        ;; horizontal: column and curswant move together
+        (let ((new-col (clamp-col (nth new-row lines)
+                                   (+ (buffer-col buf) dc))))
+          (buffer-set-cursor buf new-row new-col new-col)))))
 
 (defun buffer-open-line-below (buf)
   (let* ((row (buffer-row buf))
@@ -142,3 +155,9 @@ are pure."
                                           (subseq lines (1+ row)))
                                   row)
                       0 (buffer-filename buf)))))
+(defun buffer-size (buf)
+  "Size of the buffer as it would be written to disk:
+   one newline terminator per stored line (vim byte-count parity)."
+  (+ (length (buffer-lines buf))
+     (reduce (lambda (acc line) (+ acc (length line)))
+             (buffer-lines buf) :initial-value 0)))
