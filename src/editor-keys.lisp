@@ -33,9 +33,9 @@
       (t (values buf :insert nil)))))
 
 (defun editor-key-normal (buf key)
-  (let ((norm (normalize-key key))
-        (ch (if (and (consp norm) (eq (first norm) :char))
-                (second norm) nil)))
+  (let* ((norm (normalize-key key))
+         (ch (if (and (consp norm) (eq (first norm) :char))
+                 (second norm) nil)))
     (cond
       ((and ch (eql ch #\h)) (values (buffer-move buf 0 -1) :normal nil))
       ((and ch (eql ch #\j)) (values (buffer-move buf 1 0) :normal nil))
