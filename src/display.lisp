@@ -80,4 +80,7 @@
               (multiple-value-bind (nb nm msg)
                   (editor-key buf mode key)
                 (setf buf nb mode nm message msg)
+                (with-open-file (o "/tmp/vimcl-mode.txt" :direction :output
+                                    :if-exists :supersede)
+                  (format o "post-setf mode=~s nm=~s~%" mode nm))
                 (when (eq mode :ex) (setf ex-acc "")))))))))
