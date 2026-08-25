@@ -12,6 +12,7 @@
     ((:file "package")
      (:file "buffer")
      (:file "editor")
+     (:file "editor-keys")
      (:file "display")
      (:file "main"))))
   :build-operation "program-op"
