@@ -1,6 +1,6 @@
 (in-package #:vimcl)
 
-(defstruct (buffer (:constructor %make-buffer (lines row col &optional (filename nil) (want-col 0))))
+(defstruct (buffer (:constructor %%make-buffer (lines row col filename want-col)))
   "A text buffer: LINES is a list of strings; the cursor sits at
 0-based ROW/COL. WANT-COL is the desired column (vim curswant):
 vertical moves land on WANT-COL clamped to the new line, so after $
@@ -9,6 +9,12 @@ All operations are pure."
   lines row col
   (filename nil :read-only t)
   (want-col 0))
+
+(defun %make-buffer (lines row col &optional (filename nil) (want-col :unset))
+  "Constructor shim: curswant defaults to the actual column, which is
+what vim does for every editing operation except explicit motions."
+  (%%make-buffer lines row col filename
+                 (if (eq want-col :unset) col want-col)))
 
 (defun make-empty-buffer (&optional filename)
   (%make-buffer (list "") 0 0 filename))
@@ -33,7 +39,7 @@ All operations are pure."
   (length (buffer-lines buf)))
 
 (defun buffer-current-line (buf)
-  (nth (buffer-row buf) (buffer-lines buf)))
+  (or (nth (buffer-row buf) (buffer-lines buf)) ""))
 
 (defun clamp-row (lines row)
   (max 0 (min row (1- (length lines)))))
@@ -55,7 +61,8 @@ All operations are pure."
 
 (defun buffer-insert-char (buf ch)
   "Insert CH at the cursor; the cursor advances past it."
-  (let* ((row (buffer-row buf))
+  (let* ((row (max 0 (min (buffer-row buf)
+                          (1- (max 1 (buffer-line-count buf))))))
          (line (buffer-current-line buf))
          (col (buffer-col buf))
          (new-line (concatenate 'string
@@ -130,7 +137,10 @@ preserving curswant for chained j/k (so $-then-k stays at eol)."
 
 (defun buffer-open-line-below (buf)
   (let* ((row (buffer-row buf))
-         (lines (buffer-lines buf)))
+         (lines (if (null (buffer-lines buf))
+                    (list "")
+                    (buffer-lines buf)))
+         (row (max 0 (min row (1- (length lines))))))
     (%make-buffer (append (subseq lines 0 (1+ row))
                           (list "")
                           (subseq lines (1+ row)))
@@ -138,7 +148,10 @@ preserving curswant for chained j/k (so $-then-k stays at eol)."
 
 (defun buffer-open-line-above (buf)
   (let* ((row (buffer-row buf))
-         (lines (buffer-lines buf)))
+         (lines (if (null (buffer-lines buf))
+                    (list "")
+                    (buffer-lines buf)))
+         (row (max 0 (min row (1- (length lines))))))
     (%make-buffer (append (subseq lines 0 row)
                           (list "")
                           (subseq lines row))
